@@ -1703,3 +1703,341 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
 }
+
+/* Toast 消息提示 */
+.toast-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.toast-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 32px;
+    background: var(--sumi-black);
+    color: var(--washi-white);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(44, 44, 44, 0.3);
+    animation: toastIn 0.3s ease;
+    min-width: 120px;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.toast-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke-width: 2;
+}
+
+.toast-icon.success svg {
+    color: var(--matcha);
+}
+
+.toast-icon.error svg {
+    color: var(--kurenai);
+}
+
+.toast-icon.warning svg {
+    color: var(--kohaku);
+}
+
+.toast-message {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 400;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* 确认弹窗 */
+.confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(44, 44, 44, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.confirm-content {
+    position: relative;
+    width: 90%;
+    max-width: 320px;
+    background: var(--washi-white);
+    border-radius: 16px;
+    padding: 28px 24px 24px;
+    box-shadow: 0 8px 32px rgba(44, 44, 44, 0.2);
+    animation: confirmIn 0.3s ease;
+    text-align: center;
+}
+
+@keyframes confirmIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.confirm-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sakura);
+    border-radius: 50%;
+}
+
+.confirm-icon svg {
+    width: 28px;
+    height: 28px;
+    color: var(--kurenai);
+    stroke-width: 2;
+}
+
+.confirm-icon.warning {
+    background: var(--kohaku);
+}
+
+.confirm-icon.warning svg {
+    color: var(--washi-white);
+}
+
+.confirm-icon.success {
+    background: var(--matcha);
+}
+
+.confirm-icon.success svg {
+    color: var(--washi-white);
+}
+
+.confirm-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cha-iro);
+    margin-bottom: 8px;
+}
+
+.confirm-message {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--sumi-black);
+    opacity: 0.8;
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.confirm-btn.secondary {
+    background: var(--kinari);
+    color: var(--cha-iro);
+}
+
+.confirm-btn.secondary:hover {
+    background: rgba(139, 115, 85, 0.15);
+}
+
+.confirm-btn.primary {
+    background: var(--cha-iro);
+    color: var(--washi-white);
+}
+
+.confirm-btn.primary:hover {
+    background: #7A6448;
+}
+
+.confirm-btn.primary.danger {
+    background: var(--kurenai);
+}
+
+.confirm-btn.primary.danger:hover {
+    background: #B04B4B;
+}
+
+/* 自定义下拉选择框 */
+select.form-select,
+select.filter-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: 
+        linear-gradient(45deg, transparent 50%, var(--cha-iro) 50%),
+        linear-gradient(135deg, var(--cha-iro) 50%, transparent 50%);
+    background-position: 
+        calc(100% - 20px) 50%,
+        calc(100% - 15px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+select.form-select:focus,
+select.filter-select:focus {
+    background-image: 
+        linear-gradient(45deg, transparent 50%, var(--cha-iro) 50%),
+        linear-gradient(135deg, var(--cha-iro) 50%, transparent 50%);
+    background-position: 
+        calc(100% - 20px) 45%,
+        calc(100% - 15px) 45%;
+}
+
+select.form-select option,
+select.filter-select option {
+    background: var(--washi-white);
+    color: var(--sumi-black);
+    padding: 12px;
+}
+
+select.form-select option:hover,
+select.filter-select option:hover,
+select.form-select option:checked,
+select.filter-select option:checked {
+    background: var(--kinari);
+}
+
+/* 下拉选择框容器样式 */
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--cha-iro);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* 图片上传预览样式 */
+.upload-area {
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-area.has-image {
+    border-style: solid;
+    border-color: var(--border-light);
+}
+
+.upload-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+.upload-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: var(--sumi-black);
+    color: var(--washi-white);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.upload-remove:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.upload-remove svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* 上传区域拖拽效果 */
+.upload-area.dragover {
+    border-color: var(--cha-iro);
+    background: rgba(139, 115, 85, 0.05);
+}
+
+/* 菜单区域样式修复 */
+.menu-section {
+    background: var(--washi-white);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    display: block;
+}
