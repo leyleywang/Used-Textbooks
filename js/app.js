@@ -22,7 +22,8 @@ const mockData = {
             contact: '138****8888',
             tradeMethods: ['自提', '跑腿'],
             isbn: '9787111643654',
-            status: 'active'
+            status: 'active',
+            coverImage: null
         },
         {
             id: 2,
@@ -43,7 +44,8 @@ const mockData = {
             contact: '139****9999',
             tradeMethods: ['自提'],
             isbn: '9787040396638',
-            status: 'active'
+            status: 'active',
+            coverImage: null
         },
         {
             id: 3,
@@ -64,7 +66,8 @@ const mockData = {
             contact: '137****7777',
             tradeMethods: ['自提', '跑腿'],
             isbn: '9787115521637',
-            status: 'active'
+            status: 'active',
+            coverImage: null
         },
         {
             id: 4,
@@ -85,7 +88,8 @@ const mockData = {
             contact: '136****6666',
             tradeMethods: ['跑腿'],
             isbn: '9787301294864',
-            status: 'active'
+            status: 'active',
+            coverImage: null
         },
         {
             id: 5,
@@ -106,7 +110,8 @@ const mockData = {
             contact: '135****5555',
             tradeMethods: ['自提', '跑腿'],
             isbn: '9787302495670',
-            status: 'active'
+            status: 'active',
+            coverImage: null
         },
         {
             id: 6,
@@ -127,7 +132,8 @@ const mockData = {
             contact: '134****4444',
             tradeMethods: ['自提'],
             isbn: '9787117265416',
-            status: 'active'
+            status: 'active',
+            coverImage: null
         }
     ],
     myBooks: [
@@ -139,7 +145,8 @@ const mockData = {
             sellPrice: 35,
             originalPrice: 79.8,
             status: 'active',
-            publishDate: '2024-01-15'
+            publishDate: '2024-01-15',
+            coverImage: null
         },
         {
             id: 102,
@@ -150,7 +157,8 @@ const mockData = {
             originalPrice: 89.0,
             status: 'sold',
             publishDate: '2024-01-10',
-            soldDate: '2024-01-20'
+            soldDate: '2024-01-20',
+            coverImage: null
         },
         {
             id: 103,
@@ -161,7 +169,8 @@ const mockData = {
             originalPrice: 48.5,
             status: 'donated',
             publishDate: '2023-12-20',
-            donatedDate: '2024-01-25'
+            donatedDate: '2024-01-25',
+            coverImage: null
         }
     ],
     orders: [
@@ -234,6 +243,9 @@ const mockData = {
 let currentPage = 'home';
 let filteredBooks = [...mockData.books];
 let selectedBooksForDonate = [];
+let nextBookId = 7;
+let nextMyBookId = 104;
+let uploadedCoverImage = null;
 
 // DOM元素
 const elements = {
@@ -259,6 +271,8 @@ const elements = {
     maxPrice: document.getElementById('max-price'),
     
     // 发布页面
+    coverUpload: document.getElementById('cover-upload'),
+    coverInput: document.getElementById('cover-input'),
     isbnInput: document.getElementById('isbn-input'),
     matchIsbn: document.getElementById('match-isbn'),
     matchResult: document.getElementById('match-result'),
@@ -296,22 +310,225 @@ const elements = {
     cancelDonate: document.getElementById('cancel-donate'),
     submitDonate: document.getElementById('submit-donate'),
     
-    // 弹窗
+    // 教材详情弹窗
     modal: document.getElementById('book-detail-modal'),
     modalTitle: document.getElementById('modal-title'),
     modalBody: document.getElementById('modal-body'),
     closeModal: document.getElementById('close-modal'),
-    contactSeller: document.getElementById('contact-seller')
+    contactSeller: document.getElementById('contact-seller'),
+    
+    // Toast 消息提示
+    toastModal: document.getElementById('toast-modal'),
+    toastIcon: document.getElementById('toast-icon'),
+    toastMessage: document.getElementById('toast-message'),
+    
+    // 确认弹窗
+    confirmModal: document.getElementById('confirm-modal'),
+    confirmTitle: document.getElementById('confirm-title'),
+    confirmMessage: document.getElementById('confirm-message'),
+    confirmCancel: document.getElementById('confirm-cancel'),
+    confirmOk: document.getElementById('confirm-ok'),
+    confirmOverlay: document.querySelector('.confirm-overlay')
 };
 
-// 初始化
+// 确认弹窗回调
+let confirmCallback = null;
+
+// ==================== 自定义弹窗函数 ====================
+
+// Toast 消息提示
+function showToast(message, type = 'success') {
+    // 设置图标
+    let iconSvg = '';
+    switch (type) {
+        case 'success':
+            iconSvg = '<polyline points="20 6 9 17 4 12"></polyline>';
+            elements.toastIcon.className = 'toast-icon success';
+            break;
+        case 'error':
+            iconSvg = '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>';
+            elements.toastIcon.className = 'toast-icon error';
+            break;
+        case 'warning':
+            iconSvg = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+            elements.toastIcon.className = 'toast-icon warning';
+            break;
+    }
+    
+    elements.toastIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${iconSvg}</svg>`;
+    elements.toastMessage.textContent = message;
+    elements.toastModal.classList.remove('hidden');
+    
+    // 2秒后自动关闭
+    setTimeout(() => {
+        elements.toastModal.classList.add('hidden');
+    }, 2000);
+}
+
+// 确认弹窗
+function showConfirm(title, message, callback, options = {}) {
+    elements.confirmTitle.textContent = title;
+    elements.confirmMessage.textContent = message;
+    confirmCallback = callback;
+    
+    // 设置按钮样式
+    const okBtn = elements.confirmOk;
+    if (options.danger) {
+        okBtn.className = 'confirm-btn primary danger';
+    } else {
+        okBtn.className = 'confirm-btn primary';
+    }
+    
+    // 设置确认按钮文字
+    okBtn.textContent = options.okText || '确认';
+    elements.confirmCancel.textContent = options.cancelText || '取消';
+    
+    elements.confirmModal.classList.remove('hidden');
+}
+
+function closeConfirm() {
+    elements.confirmModal.classList.add('hidden');
+    confirmCallback = null;
+}
+
+// ==================== 图片上传预览功能 ====================
+
+function setupImageUpload() {
+    const uploadArea = elements.coverUpload;
+    const fileInput = elements.coverInput;
+    
+    // 点击上传
+    uploadArea.addEventListener('click', (e) => {
+        if (e.target.closest('.upload-remove')) return;
+        fileInput.click();
+    });
+    
+    // 文件选择
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            handleImageFile(files[0]);
+        }
+    });
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageFile(file);
+    }
+}
+
+function handleImageFile(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        uploadedCoverImage = e.target.result;
+        displayUploadedImage(uploadedCoverImage);
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function displayUploadedImage(imageData) {
+    const uploadArea = elements.coverUpload;
+    
+    // 移除已有的预览
+    const existingPreview = uploadArea.querySelector('.upload-preview');
+    if (existingPreview) existingPreview.remove();
+    const existingRemove = uploadArea.querySelector('.upload-remove');
+    if (existingRemove) existingRemove.remove();
+    
+    // 创建预览图片
+    const img = document.createElement('img');
+    img.className = 'upload-preview';
+    img.src = imageData;
+    
+    // 创建删除按钮
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'upload-remove';
+    removeBtn.type = 'button';
+    removeBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>`;
+    
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeUploadedImage();
+    });
+    
+    uploadArea.appendChild(img);
+    uploadArea.appendChild(removeBtn);
+    uploadArea.classList.add('has-image');
+    
+    // 隐藏占位符
+    const placeholder = uploadArea.querySelector('.upload-placeholder');
+    if (placeholder) {
+        placeholder.style.display = 'none';
+    }
+}
+
+function removeUploadedImage() {
+    const uploadArea = elements.coverUpload;
+    uploadedCoverImage = null;
+    
+    // 移除预览和删除按钮
+    const preview = uploadArea.querySelector('.upload-preview');
+    if (preview) preview.remove();
+    const removeBtn = uploadArea.querySelector('.upload-remove');
+    if (removeBtn) removeBtn.remove();
+    
+    uploadArea.classList.remove('has-image');
+    
+    // 显示占位符
+    const placeholder = uploadArea.querySelector('.upload-placeholder');
+    if (placeholder) {
+        placeholder.style.display = 'block';
+    }
+    
+    // 重置文件输入
+    elements.coverInput.value = '';
+}
+
+// ==================== 初始化 ====================
+
 function init() {
     setupNavigation();
+    setupImageUpload();
+    setupConfirmListeners();
     renderBooksList();
     setupEventListeners();
 }
 
-// 导航功能
+function setupConfirmListeners() {
+    elements.confirmCancel.addEventListener('click', closeConfirm);
+    elements.confirmOverlay.addEventListener('click', closeConfirm);
+    elements.confirmOk.addEventListener('click', () => {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        closeConfirm();
+    });
+}
+
+// ==================== 导航功能 ====================
+
 function setupNavigation() {
     elements.navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -343,9 +560,15 @@ function switchPage(page) {
     if (page === 'profile') {
         showProfileMain();
     }
+    
+    // 进入发布页面时重置上传
+    if (page === 'publish') {
+        resetPublishForm();
+    }
 }
 
-// 首页功能
+// ==================== 首页功能 ====================
+
 function renderBooksList() {
     if (filteredBooks.length === 0) {
         elements.booksList.innerHTML = `
@@ -365,10 +588,13 @@ function renderBooksList() {
     elements.booksList.innerHTML = filteredBooks.map(book => `
         <div class="book-card" data-id="${book.id}">
             <div class="book-card-image">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                </svg>
+                ${book.coverImage ? 
+                    `<img src="${book.coverImage}" alt="${book.title}" class="upload-preview" style="position: static; width: 100%; height: 100%;">` :
+                    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
+                    </svg>`
+                }
             </div>
             ${book.hasNotes ? '<span class="book-card-badge notes">有笔记</span>' : ''}
             <div class="book-card-content">
@@ -410,10 +636,13 @@ function showBookDetail(bookId) {
     elements.modalTitle.textContent = book.title;
     elements.modalBody.innerHTML = `
         <div class="detail-image">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-            </svg>
+            ${book.coverImage ? 
+                `<img src="${book.coverImage}" alt="${book.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">` :
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
+                </svg>`
+            }
         </div>
         <div class="detail-price">
             <span class="detail-price-current">¥${book.sellPrice}</span>
@@ -480,7 +709,8 @@ function closeBookDetail() {
     elements.modal.classList.add('hidden');
 }
 
-// 搜索和筛选功能
+// ==================== 搜索和筛选功能 ====================
+
 function performSearch() {
     const keyword = elements.searchInput.value.trim().toLowerCase();
     
@@ -496,6 +726,10 @@ function performSearch() {
     }
     
     renderBooksList();
+    
+    if (filteredBooks.length === 0 && keyword) {
+        showToast('未找到相关教材', 'warning');
+    }
 }
 
 function toggleFilterPanel() {
@@ -522,6 +756,8 @@ function applyFilters() {
     
     renderBooksList();
     elements.filterPanel.classList.add('hidden');
+    
+    showToast(`找到 ${filteredBooks.length} 本教材`, 'success');
 }
 
 function resetFilters() {
@@ -538,14 +774,17 @@ function resetFilters() {
     filteredBooks = [...mockData.books];
     renderBooksList();
     elements.filterPanel.classList.add('hidden');
+    
+    showToast('已重置筛选条件', 'success');
 }
 
-// 发布页面功能
+// ==================== 发布页面功能 ====================
+
 function matchIsbnCode() {
     const isbn = elements.isbnInput.value.trim();
     
     if (!isbn) {
-        showMatchResult('请输入ISBN码', false);
+        showToast('请输入ISBN码', 'warning');
         return;
     }
     
@@ -568,8 +807,10 @@ function matchIsbnCode() {
             elements.publishMajor.value = bookInfo.major;
             
             showMatchResult(`匹配成功：${bookInfo.title}`, true);
+            showToast('ISBN匹配成功，已自动填充信息', 'success');
         } else {
             showMatchResult('未找到对应教材信息，请手动填写', false);
+            showToast('未找到对应ISBN信息', 'warning');
         }
         
         elements.matchIsbn.textContent = '自动匹配';
@@ -579,7 +820,6 @@ function matchIsbnCode() {
 
 function showMatchResult(message, success) {
     elements.matchResult.textContent = message;
-    elements.matchResult.className = `match-result ${success ? '' : 'error'}`;
     elements.matchResult.classList.remove('hidden');
     
     if (!success) {
@@ -597,8 +837,15 @@ function validatePrice() {
     const maxAllowed = original * 0.5;
     
     if (sell > maxAllowed && original > 0) {
-        alert(`价格超过上限！建议售价不超过原价的50%（¥${maxAllowed.toFixed(1)}）`);
-        elements.sellPrice.value = maxAllowed.toFixed(1);
+        showConfirm(
+            '价格超出上限',
+            `建议售价不超过原价的50%（¥${maxAllowed.toFixed(1)}）。是否自动调整价格？`,
+            () => {
+                elements.sellPrice.value = maxAllowed.toFixed(1);
+                showToast('已自动调整价格', 'success');
+            },
+            { okText: '自动调整', cancelText: '保持不变' }
+        );
     }
 }
 
@@ -609,28 +856,87 @@ function submitPublishForm() {
     const condition = document.querySelector('input[name="condition"]:checked');
     
     if (!bookName) {
-        alert('请填写教材名称');
+        showToast('请填写教材名称', 'error');
         return;
     }
     
     if (!sellPrice) {
-        alert('请填写售价');
+        showToast('请填写售价', 'error');
         return;
     }
     
     if (!condition) {
-        alert('请选择新旧程度');
+        showToast('请选择新旧程度', 'error');
         return;
     }
     
-    // 模拟发布成功
-    alert('发布成功！您的教材已上架');
+    // 收集交易方式
+    const tradeMethods = [];
+    if (elements.tradeSelf.checked) tradeMethods.push('自提');
+    if (elements.tradeRun.checked) tradeMethods.push('跑腿');
+    
+    // 获取是否有笔记
+    const hasNotesRadio = document.querySelector('input[name="has-notes"]:checked');
+    const hasNotes = hasNotesRadio ? hasNotesRadio.value === 'true' : false;
+    
+    // 获取当前日期
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 创建新教材对象
+    const newBook = {
+        id: nextBookId++,
+        title: bookName,
+        author: elements.author.value.trim() || '未知',
+        publisher: elements.publisher.value.trim() || '未知',
+        edition: elements.edition.value.trim() || '未知',
+        publishYear: elements.publishYear.value ? parseInt(elements.publishYear.value) : new Date().getFullYear(),
+        originalPrice: elements.originalPrice.value ? parseFloat(elements.originalPrice.value) : parseFloat(sellPrice) * 2,
+        sellPrice: parseFloat(sellPrice),
+        condition: condition.value,
+        hasNotes: hasNotes,
+        university: elements.publishUniversity.value || '北京大学',
+        major: elements.publishMajor.value || '计算机科学',
+        course: elements.courseName.value.trim() || '未知课程',
+        location: elements.pickupLocation.value.trim() || '校园内',
+        seller: '书物用户',
+        contact: elements.contact.value.trim() || '未提供',
+        tradeMethods: tradeMethods.length > 0 ? tradeMethods : ['自提'],
+        isbn: elements.isbnInput.value.trim() || '未知',
+        status: 'active',
+        coverImage: uploadedCoverImage
+    };
+    
+    // 创建我的发布记录
+    const myNewBook = {
+        id: nextMyBookId++,
+        title: bookName,
+        author: elements.author.value.trim() || '未知',
+        condition: condition.value,
+        sellPrice: parseFloat(sellPrice),
+        originalPrice: elements.originalPrice.value ? parseFloat(elements.originalPrice.value) : parseFloat(sellPrice) * 2,
+        status: 'active',
+        publishDate: today,
+        coverImage: uploadedCoverImage
+    };
+    
+    // 添加到数据中
+    mockData.books.unshift(newBook);
+    mockData.myBooks.unshift(myNewBook);
+    filteredBooks = [...mockData.books];
+    
+    // 重新渲染
+    renderBooksList();
+    
+    // 显示成功提示
+    showToast('发布成功！您的教材已上架', 'success');
     
     // 重置表单
     resetPublishForm();
     
-    // 返回首页
-    switchPage('home');
+    // 延迟后返回首页
+    setTimeout(() => {
+        switchPage('home');
+    }, 1500);
 }
 
 function resetPublishForm() {
@@ -658,18 +964,30 @@ function resetPublishForm() {
     document.querySelectorAll('input[name="has-notes"]').forEach(radio => {
         radio.checked = false;
     });
+    
+    // 清除上传的图片
+    removeUploadedImage();
 }
 
-// 我的页面功能
+// ==================== 我的页面功能 ====================
+
 function showProfileMain() {
-    elements.menuSection.style.display = 'block';
+    // 重新获取菜单区域元素
+    const menuSection = elements.profilePage.querySelector('.menu-section');
+    if (menuSection) {
+        menuSection.style.display = 'block';
+    }
     elements.myPublished.classList.add('hidden');
     elements.myOrders.classList.add('hidden');
     elements.donateSection.classList.add('hidden');
 }
 
 function showMyPublished() {
-    elements.menuSection.style.display = 'none';
+    // 重新获取菜单区域元素
+    const menuSection = elements.profilePage.querySelector('.menu-section');
+    if (menuSection) {
+        menuSection.style.display = 'none';
+    }
     elements.myPublished.classList.remove('hidden');
     elements.myOrders.classList.add('hidden');
     elements.donateSection.classList.add('hidden');
@@ -677,7 +995,11 @@ function showMyPublished() {
 }
 
 function showMyOrders() {
-    elements.menuSection.style.display = 'none';
+    // 重新获取菜单区域元素
+    const menuSection = elements.profilePage.querySelector('.menu-section');
+    if (menuSection) {
+        menuSection.style.display = 'none';
+    }
     elements.myPublished.classList.add('hidden');
     elements.myOrders.classList.remove('hidden');
     elements.donateSection.classList.add('hidden');
@@ -685,7 +1007,11 @@ function showMyOrders() {
 }
 
 function showDonateSection() {
-    elements.menuSection.style.display = 'none';
+    // 重新获取菜单区域元素
+    const menuSection = elements.profilePage.querySelector('.menu-section');
+    if (menuSection) {
+        menuSection.style.display = 'none';
+    }
     elements.myPublished.classList.add('hidden');
     elements.myOrders.classList.add('hidden');
     elements.donateSection.classList.remove('hidden');
@@ -710,10 +1036,13 @@ function renderMyBooksList() {
     elements.myBooksList.innerHTML = mockData.myBooks.map(book => `
         <div class="my-book-item">
             <div class="my-book-image">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                </svg>
+                ${book.coverImage ? 
+                    `<img src="${book.coverImage}" alt="${book.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` :
+                    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
+                    </svg>`
+                }
             </div>
             <div class="my-book-info">
                 <div>
@@ -832,37 +1161,46 @@ function updateSelectedDonateBooks() {
 
 function submitDonation() {
     if (selectedBooksForDonate.length === 0) {
-        alert('请选择要捐赠的教材');
+        showToast('请选择要捐赠的教材', 'warning');
         return;
     }
     
     const donateType = document.querySelector('input[name="donate-type"]:checked');
     if (!donateType) {
-        alert('请选择捐赠方式');
+        showToast('请选择捐赠方式', 'warning');
         return;
     }
     
-    // 模拟捐赠成功
-    alert(`感谢您的爱心捐赠！已成功捐赠 ${selectedBooksForDonate.length} 本教材。`);
-    
-    // 更新模拟数据
-    selectedBooksForDonate.forEach(id => {
-        const book = mockData.myBooks.find(b => b.id === id);
-        if (book) {
-            book.status = 'donated';
-            book.donatedDate = new Date().toISOString().split('T')[0];
-        }
-    });
-    
-    // 重置
-    selectedBooksForDonate = [];
-    elements.donateMessage.value = '';
-    
-    // 返回我的页面
-    showProfileMain();
+    showConfirm(
+        '确认捐赠',
+        `您将捐赠 ${selectedBooksForDonate.length} 本教材。确认后将无法撤销此操作。`,
+        () => {
+            // 更新模拟数据
+            selectedBooksForDonate.forEach(id => {
+                const book = mockData.myBooks.find(b => b.id === id);
+                if (book) {
+                    book.status = 'donated';
+                    book.donatedDate = new Date().toISOString().split('T')[0];
+                }
+            });
+            
+            // 重置
+            selectedBooksForDonate = [];
+            elements.donateMessage.value = '';
+            
+            showToast(`感谢您的爱心捐赠！已成功捐赠 ${selectedBooksForDonate.length > 0 ? selectedBooksForDonate.length : '0'} 本教材。`, 'success');
+            
+            // 返回我的页面
+            setTimeout(() => {
+                showProfileMain();
+            }, 1500);
+        },
+        { danger: true, okText: '确认捐赠' }
+    );
 }
 
-// 事件监听器设置
+// ==================== 事件监听器设置 ====================
+
 function setupEventListeners() {
     // 首页搜索
     elements.searchBtn.addEventListener('click', performSearch);
@@ -901,9 +1239,10 @@ function setupEventListeners() {
     elements.closeModal.addEventListener('click', closeBookDetail);
     document.querySelector('.modal-overlay').addEventListener('click', closeBookDetail);
     elements.contactSeller.addEventListener('click', () => {
-        alert('已复制卖家联系方式到剪贴板');
+        showToast('已复制卖家联系方式到剪贴板', 'success');
     });
 }
 
-// 页面加载完成后初始化
+// ==================== 页面加载完成后初始化 ====================
+
 document.addEventListener('DOMContentLoaded', init);
