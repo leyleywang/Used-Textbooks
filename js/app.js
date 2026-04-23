@@ -1,7 +1,15 @@
 // 二手教材交易平台 - JavaScript应用逻辑
 
-// 模拟数据
-const mockData = {
+// localStorage 键名
+const STORAGE_KEYS = {
+    BOOKS: 'used_textbooks_books',
+    MY_BOOKS: 'used_textbooks_my_books',
+    NEXT_BOOK_ID: 'used_textbooks_next_book_id',
+    NEXT_MY_BOOK_ID: 'used_textbooks_next_my_book_id'
+};
+
+// 默认模拟数据
+const defaultMockData = {
     books: [
         {
             id: 1,
@@ -239,12 +247,64 @@ const mockData = {
     }
 };
 
+// ==================== localStorage 数据持久化 ====================
+
+// 从 localStorage 读取数据
+function loadFromStorage() {
+    const storedBooks = localStorage.getItem(STORAGE_KEYS.BOOKS);
+    const storedMyBooks = localStorage.getItem(STORAGE_KEYS.MY_BOOKS);
+    const storedNextBookId = localStorage.getItem(STORAGE_KEYS.NEXT_BOOK_ID);
+    const storedNextMyBookId = localStorage.getItem(STORAGE_KEYS.NEXT_MY_BOOK_ID);
+    
+    // 返回合并后的数据
+    return {
+        books: storedBooks ? JSON.parse(storedBooks) : [...defaultMockData.books],
+        myBooks: storedMyBooks ? JSON.parse(storedMyBooks) : [...defaultMockData.myBooks],
+        orders: [...defaultMockData.orders],
+        isbnDatabase: defaultMockData.isbnDatabase,
+        nextBookId: storedNextBookId ? parseInt(storedNextBookId) : 7,
+        nextMyBookId: storedNextMyBookId ? parseInt(storedNextMyBookId) : 104
+    };
+}
+
+// 保存数据到 localStorage
+function saveToStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEYS.BOOKS, JSON.stringify(mockData.books));
+        localStorage.setItem(STORAGE_KEYS.MY_BOOKS, JSON.stringify(mockData.myBooks));
+        localStorage.setItem(STORAGE_KEYS.NEXT_BOOK_ID, nextBookId.toString());
+        localStorage.setItem(STORAGE_KEYS.NEXT_MY_BOOK_ID, nextMyBookId.toString());
+        return true;
+    } catch (e) {
+        console.error('保存到 localStorage 失败:', e);
+        return false;
+    }
+}
+
+// 清空 localStorage（调试用）
+function clearStorage() {
+    localStorage.removeItem(STORAGE_KEYS.BOOKS);
+    localStorage.removeItem(STORAGE_KEYS.MY_BOOKS);
+    localStorage.removeItem(STORAGE_KEYS.NEXT_BOOK_ID);
+    localStorage.removeItem(STORAGE_KEYS.NEXT_MY_BOOK_ID);
+    console.log('localStorage 已清空');
+}
+
+// 加载数据
+const storageData = loadFromStorage();
+const mockData = {
+    books: storageData.books,
+    myBooks: storageData.myBooks,
+    orders: storageData.orders,
+    isbnDatabase: storageData.isbnDatabase
+};
+
 // 当前状态
 let currentPage = 'home';
 let filteredBooks = [...mockData.books];
 let selectedBooksForDonate = [];
-let nextBookId = 7;
-let nextMyBookId = 104;
+let nextBookId = storageData.nextBookId;
+let nextMyBookId = storageData.nextMyBookId;
 let uploadedCoverImage = null;
 
 // DOM元素
@@ -924,6 +984,9 @@ function submitPublishForm() {
     mockData.myBooks.unshift(myNewBook);
     filteredBooks = [...mockData.books];
     
+    // 保存到 localStorage
+    saveToStorage();
+    
     // 重新渲染
     renderBooksList();
     
@@ -1184,11 +1247,15 @@ function submitDonation() {
                 }
             });
             
+            // 保存到 localStorage
+            saveToStorage();
+            
             // 重置
+            const donatedCount = selectedBooksForDonate.length;
             selectedBooksForDonate = [];
             elements.donateMessage.value = '';
             
-            showToast(`感谢您的爱心捐赠！已成功捐赠 ${selectedBooksForDonate.length > 0 ? selectedBooksForDonate.length : '0'} 本教材。`, 'success');
+            showToast(`感谢您的爱心捐赠！已成功捐赠 ${donatedCount} 本教材。`, 'success');
             
             // 返回我的页面
             setTimeout(() => {
