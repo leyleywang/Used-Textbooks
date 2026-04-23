@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书物 - 二手教材交易平台</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 页面内容区域 -->
+        <div class="page-content">
+            <!-- 首页 -->
+            <div id="home-page" class="page active">
+                <header class="header">
+                    <div class="header-content">
+                        <h1 class="logo">书物</h1>
+                        <p class="subtitle">传递知识的温度</p>
+                    </div>
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" id="search-input" placeholder="搜索教材名称、ISBN、课程...">
+                            <button id="search-btn" class="search-btn">搜索</button>
+                        </div>
+                        <button id="filter-btn" class="filter-btn">筛选</button>
+                    </div>
+                    <!-- 筛选面板 -->
+                    <div id="filter-panel" class="filter-panel hidden">
+                        <div class="filter-section">
+                            <label class="filter-label">高校</label>
+                            <select id="filter-university" class="filter-select">
+                                <option value="">全部高校</option>
+                                <option value="北京大学">北京大学</option>
+                                <option value="清华大学">清华大学</option>
+                                <option value="复旦大学">复旦大学</option>
+                                <option value="上海交通大学">上海交通大学</option>
+                                <option value="浙江大学">浙江大学</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <label class="filter-label">专业</label>
+                            <select id="filter-major" class="filter-select">
+                                <option value="">全部专业</option>
+                                <option value="计算机科学">计算机科学</option>
+                                <option value="金融学">金融学</option>
+                                <option value="机械工程">机械工程</option>
+                                <option value="临床医学">临床医学</option>
+                                <option value="汉语言文学">汉语言文学</option>
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <label class="filter-label">新旧程度</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="全新"> 全新
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="九成新"> 九成新
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="八成新"> 八成新
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="七成新"> 七成新
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <label class="filter-label">价格范围</label>
+                            <div class="price-range">
+                                <input type="number" id="min-price" placeholder="最低价">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-price" placeholder="最高价">
+                            </div>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="reset-filter" class="reset-btn">重置</button>
+                            <button id="apply-filter" class="apply-btn">应用筛选</button>
+                        </div>
+                    </div>
+                </header>
+                <div class="books-container">
+                    <div id="books-list" class="books-list">
+                        <!-- 教材列表将通过JavaScript动态渲染 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 发布页面 -->
+            <div id="publish-page" class="page">
+                <header class="page-header">
+                    <h2 class="page-title">发布闲置</h2>
+                    <p class="page-desc">让闲置教材传递知识的温度</p>
+                </header>
+                <div class="publish-form">
+                    <div class="form-section">
+                        <h3 class="section-title">教材信息</h3>
+                        <div class="form-group">
+                            <label class="form-label">教材封面</label>
+                            <div class="upload-area" id="cover-upload">
+                                <div class="upload-placeholder">
+                                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <p class="upload-text">点击或拖拽上传封面</p>
+                                </div>
+                                <input type="file" id="cover-input" accept="image/*" class="file-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ISBN码</label>
+                            <div class="isbn-input-group">
+                                <input type="text" id="isbn-input" class="form-input" placeholder="输入ISBN码或扫描条码">
+                                <button id="scan-isbn" class="scan-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="9" y1="9" x2="15" y2="9"></line>
+                                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                                    </svg>
+                                </button>
+                                <button id="match-isbn" class="match-btn">自动匹配</button>
+                            </div>
+                            <p id="match-result" class="match-result hidden"></p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">教材名称 <span class="required">*</span></label>
+                            <input type="text" id="book-name" class="form-input" placeholder="请输入教材名称">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label class="form-label">作者</label>
+                                <input type="text" id="author" class="form-input" placeholder="作者">
+                            </div>
+                            <div class="form-group half">
+                                <label class="form-label">出版社</label>
+                                <input type="text" id="publisher" class="form-input" placeholder="出版社">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label class="form-label">版本</label>
+                                <input type="text" id="edition" class="form-input" placeholder="如：第7版">
+                            </div>
+                            <div class="form-group half">
+                                <label class="form-label">出版年份</label>
+                                <input type="number" id="publish-year" class="form-input" placeholder="如：2023">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">课程关联</h3>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label class="form-label">学校</label>
+                                <select id="publish-university" class="form-select">
+                                    <option value="">请选择学校</option>
+                                    <option value="北京大学">北京大学</option>
+                                    <option value="清华大学">清华大学</option>
+                                    <option value="复旦大学">复旦大学</option>
+                                    <option value="上海交通大学">上海交通大学</option>
+                                    <option value="浙江大学">浙江大学</option>
+                                </select>
+                            </div>
+                            <div class="form-group half">
+                                <label class="form-label">专业</label>
+                                <select id="publish-major" class="form-select">
+                                    <option value="">请选择专业</option>
+                                    <option value="计算机科学">计算机科学</option>
+                                    <option value="金融学">金融学</option>
+                                    <option value="机械工程">机械工程</option>
+                                    <option value="临床医学">临床医学</option>
+                                    <option value="汉语言文学">汉语言文学</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">课程名称</label>
+                            <input type="text" id="course-name" class="form-input" placeholder="如：高等数学、数据结构">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">交易信息</h3>
+                        <div class="form-group">
+                            <label class="form-label">新旧程度</label>
+                            <div class="radio-group" id="condition-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="condition" value="全新"> 全新
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="condition" value="九成新"> 九成新
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="condition" value="八成新"> 八成新
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="condition" value="七成新"> 七成新
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="condition" value="六成新及以下"> 六成新及以下
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">是否含笔记</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="has-notes" value="true"> 有笔记
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="has-notes" value="false"> 无笔记
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label class="form-label">原价 (元)</label>
+                                <input type="number" id="original-price" class="form-input" placeholder="教材原价">
+                            </div>
+                            <div class="form-group half">
+                                <label class="form-label">售价 (元) <span class="required">*</span></label>
+                                <input type="number" id="sell-price" class="form-input" placeholder="建议不超过原价的50%">
+                                <p class="price-hint">价格上限：原价的50%</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">交易方式</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="自提" id="trade-self"> 自提
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="跑腿" id="trade-run"> 跑腿
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">自提地点</label>
+                            <input type="text" id="pickup-location" class="form-input" placeholder="如：北京大学东门">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">联系方式</label>
+                            <input type="text" id="contact" class="form-input" placeholder="手机号或微信号">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button id="cancel-publish" class="cancel-btn">取消</button>
+                        <button id="submit-publish" class="submit-btn">发布</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的页面 -->
+            <div id="profile-page" class="page">
+                <header class="profile-header">
+                    <div class="user-info">
+                        <div class="avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="user-details">
+                            <h2 class="user-name">书物用户</h2>
+                            <p class="user-campus">北京大学 · 计算机科学</p>
+                        </div>
+                    </div>
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <span class="stat-number">12</span>
+                            <span class="stat-label">发布中</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">8</span>
+                            <span class="stat-label">已售出</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">3</span>
+                            <span class="stat-label">已捐赠</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="profile-content">
+                    <!-- 功能入口 -->
+                    <div class="menu-section">
+                        <div class="menu-item" id="menu-orders">
+                            <div class="menu-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 01-8 0"></path>
+                                </svg>
+                            </div>
+                            <span class="menu-text">我的订单</span>
+                            <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="menu-item" id="menu-published">
+                            <div class="menu-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                            </div>
+                            <span class="menu-text">我的发布</span>
+                            <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="menu-item" id="menu-donate">
+                            <div class="menu-icon donate-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>
+                                </svg>
+                            </div>
+                            <span class="menu-text">教材捐赠</span>
+                            <span class="menu-badge">公益</span>
+                            <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- 我的发布列表 -->
+                    <div id="my-published" class="content-section hidden">
+                        <div class="section-header">
+                            <h3 class="section-title">我的发布</h3>
+                            <button id="back-from-published" class="back-btn">返回</button>
+                        </div>
+                        <div id="my-books-list" class="my-books-list">
+                            <!-- 我的发布列表将通过JavaScript动态渲染 -->
+                        </div>
+                    </div>
+
+                    <!-- 订单列表 -->
+                    <div id="my-orders" class="content-section hidden">
+                        <div class="section-header">
+                            <h3 class="section-title">我的订单</h3>
+                            <button id="back-from-orders" class="back-btn">返回</button>
+                        </div>
+                        <div id="orders-list" class="orders-list">
+                            <!-- 订单列表将通过JavaScript动态渲染 -->
+                        </div>
+                    </div>
+
+                    <!-- 捐赠页面 -->
+                    <div id="donate-section" class="content-section hidden">
+                        <div class="section-header">
+                            <h3 class="section-title">教材捐赠</h3>
+                            <button id="back-from-donate" class="back-btn">返回</button>
+                        </div>
+                        <div class="donate-intro">
+                            <div class="donate-icon-large">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="donate-title">让知识继续传递</h4>
+                            <p class="donate-desc">将闲置教材捐赠给需要的同学，每一本书都是一份温暖。捐赠的教材将由学校社团统一管理，发放给有需要的新生或经济困难的同学。</p>
+                        </div>
+                        <div class="form-section">
+                            <h3 class="section-title">选择捐赠教材</h3>
+                            <div id="donate-books-list" class="donate-books-list">
+                                <!-- 可捐赠的教材列表 -->
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h3 class="section-title">捐赠信息</h3>
+                            <div class="form-group">
+                                <label class="form-label">捐赠方式</label>
+                                <div class="radio-group">
+                                    <label class="radio-item">
+                                        <input type="radio" name="donate-type" value="社团代收"> 社团代收
+                                    </label>
+                                    <label class="radio-item">
+                                        <input type="radio" name="donate-type" value="直接捐赠"> 直接捐赠给个人
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">留言 (可选)</label>
+                                <textarea id="donate-message" class="form-textarea" placeholder="写下您想对受赠者说的话..."></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button id="cancel-donate" class="cancel-btn">取消</button>
+                            <button id="submit-donate" class="submit-btn donate-submit">确认捐赠</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-page="home">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span class="nav-label">首页</span>
+            </div>
+            <div class="nav-item" data-page="publish">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span class="nav-label">发布</span>
+            </div>
+            <div class="nav-item" data-page="profile">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span class="nav-label">我的</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 教材详情弹窗 -->
+    <div id="book-detail-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" class="modal-title">教材详情</h3>
+                <button id="close-modal" class="close-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-body" class="modal-body">
+                <!-- 详情内容将通过JavaScript动态渲染 -->
+            </div>
+            <div class="modal-footer">
+                <button id="contact-seller" class="contact-btn">联系卖家</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
